@@ -27,16 +27,19 @@ The outputs `method_comparison.csv` and `method_diagnostics.csv` report both mod
 
 ## Public Stand-In Result
 
-The local public smoke run used 20 balanced `ds002748` subjects: `sub-01` through `sub-10` for depression and `sub-52` through `sub-61` for controls.
+The completed public run used all 72 `ds002748` subjects: 51 depression subjects and 21 healthy controls. Public mode used 100 Schaefer-100 ReHo ROI columns.
 
-Held-out test accuracy was `0.40` in both modes on this small public split. Compat mode raised held-out AUC from `0.50` to `0.667`, but the larger diagnostic was the validation/test gap:
+On the single full-dataset split, the leak-safe mode reached accuracy `0.667`, AUC `0.769`, and F1 `0.518`. Compat mode reached accuracy `0.722`, AUC `0.677`, and F1 `0.557`.
 
-- `leak-safe`: top-model CV accuracy mean `0.689`, held-out accuracy `0.40`.
-- `compat`: top-model CV accuracy mean `0.994`, held-out accuracy `0.40`.
+The stronger diagnostic is the 50-seed benchmark:
 
-The neutral interpretation is that row-level CV over augmented rows can produce highly optimistic validation estimates on this public stand-in dataset. This does not prove the private ACAM-J result is inflated; it shows why the leak-safe mode is included and why subject-level validation should be preferred for any rerun on the private data.
+- `leak-safe`: test accuracy `0.640 +/- 0.099`, top-model CV accuracy `0.663 +/- 0.046`, CV-test accuracy gap `0.023 +/- 0.111`.
+- `compat`: test accuracy `0.693 +/- 0.083`, top-model CV accuracy `0.971 +/- 0.044`, CV-test accuracy gap `0.278 +/- 0.086`.
+- `compat - leak-safe`: test accuracy `+0.053 +/- 0.097`, top-model CV accuracy `+0.308 +/- 0.071`, CV-test accuracy gap `+0.255 +/- 0.107`.
 
-The ReHo front-end was checked against AFNI `3dReHo` on `sub-01`. The voxelwise Pearson correlation between the Python implementation and AFNI was `0.9833`, passing the repository threshold of `0.90`.
+The neutral interpretation is that row-level CV over augmented rows can produce highly optimistic validation estimates on this public stand-in dataset. Compat mode had a modest mean held-out accuracy lift, but a much larger validation/test gap. This does not prove the private ACAM-J result is inflated; it shows why the leak-safe mode is included and why subject-level validation should be preferred for any rerun on the private data.
+
+The ReHo front-end was checked against AFNI `3dReHo` on four mixed public subjects: `sub-01`, `sub-25`, `sub-52`, and `sub-70`. All four passed the repository threshold of `0.90`; voxelwise Pearson correlations ranged from `0.9722` to `0.9833`, with mean `0.9765`.
 
 ## Atlas and ROI Selection
 

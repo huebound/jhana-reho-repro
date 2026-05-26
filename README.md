@@ -98,13 +98,29 @@ jhana-repro run-public \
   --n-permutations 100
 ```
 
-Run the full public pipeline:
+Run the full public pipeline over all 72 `ds002748` subjects:
+
+```bash
+scripts/run_ds002748_full.sh
+```
+
+Or run the same stages manually:
 
 ```bash
 jhana-repro run-public \
   --work-dir runs/ds002748 \
   --mode both \
   --n-permutations 1000
+```
+
+Run a repeated-seed benchmark from an existing ReHo CSV:
+
+```bash
+jhana-repro benchmark-public \
+  --reho runs/ds002748/Data/1ReHo/reho_output.csv \
+  --output-dir reports/ds002748_full_benchmark_50seeds \
+  --seeds 50 \
+  --mode both
 ```
 
 Outputs are written under:
@@ -117,14 +133,22 @@ Outputs are written under:
 
 ## Verified Local Run
 
-On 2026-05-26, the 20-subject public smoke run completed end-to-end locally:
+On 2026-05-26, the full 72-subject public run completed end-to-end locally:
 
-- ReHo CSV: 20 rows, 100 Schaefer-100 ROI feature columns, 10 depression and 10 control subjects.
-- Leak-safe held-out metrics: accuracy `0.40`, AUC `0.50`, F1 `0.40`.
-- Compat held-out metrics: accuracy `0.40`, AUC `0.667`, F1 `0.40`.
-- Leak-safe top-model CV accuracy mean: `0.689`; held-out accuracy: `0.40`.
-- Compat top-model CV accuracy mean: `0.994`; held-out accuracy: `0.40`.
-- AFNI validation passed for `sub-01`: Python ReHo versus AFNI `3dReHo` Pearson `r = 0.9833` at the voxel level.
+- ReHo CSV: 72 rows, 100 Schaefer-100 ROI feature columns, 51 depression and 21 control subjects.
+- Single split leak-safe metrics: accuracy `0.667`, AUC `0.769`, F1 `0.518`.
+- Single split compat metrics: accuracy `0.722`, AUC `0.677`, F1 `0.557`.
+- 50-seed leak-safe benchmark: test accuracy `0.640 +/- 0.099`; top-model CV accuracy `0.663 +/- 0.046`; CV-test gap `0.023 +/- 0.111`.
+- 50-seed compat benchmark: test accuracy `0.693 +/- 0.083`; top-model CV accuracy `0.971 +/- 0.044`; CV-test gap `0.278 +/- 0.086`.
+- Compat minus leak-safe across 50 seeds: test accuracy `+0.053 +/- 0.097`; top-model CV accuracy `+0.308 +/- 0.071`; CV-test gap `+0.255 +/- 0.107`.
+- AFNI validation passed for `sub-01`, `sub-25`, `sub-52`, and `sub-70`: mean Python-vs-AFNI voxelwise Pearson `r = 0.9765`, range `0.9722` to `0.9833`.
+
+Tracked summary reports:
+
+- `reports/ds002748_full_run_summary.md`
+- `reports/ds002748_full_run_summary.json`
+- `reports/ds002748_full_benchmark_50seeds/`
+- `reports/afni_reho_validation_mixed.json`
 
 These numbers are a machinery check on public depression/control data. They are not evidence for or against the paper's private ACAM-J accuracy.
 
@@ -139,6 +163,15 @@ jhana-repro validate-reho-afni \
 ```
 
 The validation writes `runs/ds002748/afni_reho_validation.json`. A Pearson correlation below `0.90` should block release until investigated. If AFNI is not installed, validation is explicitly marked as skipped.
+
+Validate multiple subjects and write a tracked-size summary:
+
+```bash
+jhana-repro validate-reho-afni \
+  --work-dir runs/ds002748 \
+  --subjects sub-01 sub-25 sub-52 sub-70 \
+  --output reports/afni_reho_validation_mixed.json
+```
 
 ## Methods Note
 

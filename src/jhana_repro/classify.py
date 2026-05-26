@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +36,7 @@ class ClassificationConfig:
     rfe_fraction: float = 0.5
     n_permutations: int = 1000
     compat_target_per_subject: int = 8
+    write_artifacts: bool = True
 
 
 def run_modes(
@@ -46,14 +47,16 @@ def run_modes(
 ) -> dict[str, dict]:
     df = read_reho_csv(reho_csv)
     roi_columns = public_roi_columns(df)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if config.write_artifacts:
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     modes = ["leak-safe", "compat"] if mode == "both" else [mode]
     results = {}
     split = subject_train_test_split(df, config)
     for selected_mode in modes:
         mode_dir = output_dir / selected_mode
-        mode_dir.mkdir(parents=True, exist_ok=True)
+        if config.write_artifacts:
+            mode_dir.mkdir(parents=True, exist_ok=True)
         result = run_public_classification(
             df=df,
             roi_columns=roi_columns,
@@ -65,17 +68,69 @@ def run_modes(
         results[selected_mode] = result
 
     diagnostics = diagnostics_frame(results)
-    diagnostics.to_csv(output_dir / "method_diagnostics.csv", index=False)
-    (output_dir / "method_diagnostics.json").write_text(
-        json.dumps(diagnostics.to_dict(orient="records"), indent=2) + "\n"
-    )
-    if set(results) == {"leak-safe", "compat"}:
-        comparison = comparison_frame(results)
-        comparison.to_csv(output_dir / "method_comparison.csv", index=False)
-        (output_dir / "method_comparison.json").write_text(
-            json.dumps(comparison.to_dict(orient="records"), indent=2) + "\n"
+    if config.write_artifacts:
+        diagnostics.to_csv(output_dir / "method_diagnostics.csv", index=False)
+        (output_dir / "method_diagnostics.json").write_text(
+            json.dumps(diagnostics.to_dict(orient="records"), indent=2) + "\n"
         )
+        if set(results) == {"leak-safe", "compat"}:
+            comparison = comparison_frame(results)
+            comparison.to_csv(output_dir / "method_comparison.csv", index=False)
+            (output_dir / "method_comparison.json").write_text(
+                json.dumps(comparison.to_dict(orient="records"), indent=2) + "\n"
+            )
     return results
+
+
+def run_benchmark(
+    reho_csv: Path,
+    output_dir: Path,
+    seeds: int = 50,
+    seed_start: int = 0,
+    mode: str = "both",
+    config: ClassificationConfig = ClassificationConfig(),
+) -> dict[str, pd.DataFrame]:
+    df = read_reho_csv(reho_csv)
+    roi_columns = public_roi_columns(df)
+    modes = ["leak-safe", "compat"] if mode == "both" else [mode]
+    rows = []
+    for seed in range(seed_start, seed_start + seeds):
+        seed_config = replace(config, random_state=seed, n_permutations=0, write_artifacts=False)
+        split = subject_train_test_split(df, seed_config)
+        results = {}
+        for selected_mode in modes:
+            results[selected_mode] = run_public_classification(
+                df=df,
+                roi_columns=roi_columns,
+                output_dir=output_dir / "_benchmark_scratch" / f"seed_{seed}" / selected_mode,
+                mode=selected_mode,
+                split=split,
+                config=seed_config,
+            )
+        diagnostics = diagnostics_frame(results)
+        for row in diagnostics.to_dict(orient="records"):
+            row["seed"] = seed
+            row["train_subject_ids"] = ";".join(results[row["mode"]]["train_subjects"])
+            row["test_subject_ids"] = ";".join(results[row["mode"]]["test_subjects"])
+            rows.append(row)
+
+    by_seed = pd.DataFrame(rows)
+    summary = benchmark_summary_frame(by_seed)
+    differences = benchmark_difference_frame(by_seed)
+    difference_summary = difference_summary_frame(differences)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    by_seed.to_csv(output_dir / "benchmark_by_seed.csv", index=False)
+    summary.to_csv(output_dir / "benchmark_summary.csv", index=False)
+    differences.to_csv(output_dir / "benchmark_mode_differences_by_seed.csv", index=False)
+    difference_summary.to_csv(output_dir / "benchmark_mode_difference_summary.csv", index=False)
+    write_benchmark_json(output_dir, by_seed, summary, differences, difference_summary)
+    write_benchmark_markdown(output_dir, reho_csv, seed_start, seeds, summary, difference_summary)
+    return {
+        "by_seed": by_seed,
+        "summary": summary,
+        "differences": differences,
+        "difference_summary": difference_summary,
+    }
 
 
 def subject_train_test_split(df: pd.DataFrame, config: ClassificationConfig) -> dict[str, np.ndarray]:
@@ -121,7 +176,8 @@ def run_public_classification(
     result["mode"] = mode
     result["train_subjects"] = sorted(map(str, split["train_subjects"]))
     result["test_subjects"] = sorted(map(str, split["test_subjects"]))
-    write_outputs(output_dir, result)
+    if config.write_artifacts:
+        write_outputs(output_dir, result)
     return result
 
 
@@ -175,8 +231,9 @@ def run_leak_safe(
         proba = predict_proba_like(model, X_test_rfe)
         individual.append({"model": name, **compute_metrics(y_test, np.argmax(proba, axis=1), proba)})
 
-    write_feature_importances(output_dir, fitted_models, X_train_rfe, y_train_bal, selected_features)
-    cv_df.to_csv(output_dir / "cv_metrics.csv", index=False)
+    if config.write_artifacts:
+        write_feature_importances(output_dir, fitted_models, X_train_rfe, y_train_bal, selected_features)
+        cv_df.to_csv(output_dir / "cv_metrics.csv", index=False)
     return {
         "pair": f"{encoder.classes_[0]}_vs_{encoder.classes_[1]}",
         "classes": encoder.classes_.tolist(),
@@ -235,15 +292,16 @@ def run_compat(
     ensemble = np.mean([predict_proba_like(fitted_models[name], X_test_rfe) for name in top_models], axis=0)
     preds = np.argmax(ensemble, axis=1)
     ensemble_metrics = compute_metrics(y_test, preds, ensemble, config.n_permutations, config.random_state)
-    write_feature_importances(
-        output_dir,
-        {name: fitted_models[name] for name in top_models},
-        X_rfe,
-        y,
-        selected_features,
-    )
-    pd.DataFrame(cv_rows).to_csv(output_dir / "cv_metrics.csv", index=False)
-    augmented.to_csv(output_dir / "compat_upsampled_train.csv", index=False)
+    if config.write_artifacts:
+        write_feature_importances(
+            output_dir,
+            {name: fitted_models[name] for name in top_models},
+            X_rfe,
+            y,
+            selected_features,
+        )
+        pd.DataFrame(cv_rows).to_csv(output_dir / "cv_metrics.csv", index=False)
+        augmented.to_csv(output_dir / "compat_upsampled_train.csv", index=False)
     return {
         "pair": f"{encoder.classes_[0]}_vs_{encoder.classes_[1]}",
         "classes": encoder.classes_.tolist(),
@@ -504,6 +562,7 @@ def diagnostics_frame(results: dict[str, dict]) -> pd.DataFrame:
                 "test_accuracy": result["ensemble"]["accuracy"],
                 "test_auc": result["ensemble"]["auc"],
                 "test_f1": result["ensemble"]["f1"],
+                "test_kappa": result["ensemble"]["kappa"],
                 "cv_minus_test_accuracy": cv_top - result["ensemble"]["accuracy"],
             }
         )
@@ -521,6 +580,140 @@ def validation_accuracy_summary(result: dict) -> tuple[float, float]:
         all_scores = [row["cv_accuracy"] for row in rows if "cv_accuracy" in row]
         top_scores = [row["cv_accuracy"] for row in rows if row["model"] in top_models and "cv_accuracy" in row]
     return float(np.mean(all_scores)), float(np.mean(top_scores))
+
+
+def benchmark_summary_frame(by_seed: pd.DataFrame) -> pd.DataFrame:
+    metric_columns = benchmark_metric_columns()
+    rows = []
+    for mode, group in by_seed.groupby("mode", sort=True):
+        row = {"mode": mode, "n_seeds": int(group["seed"].nunique())}
+        for metric in metric_columns:
+            values = group[metric].astype(float)
+            row[f"{metric}_mean"] = float(values.mean())
+            row[f"{metric}_std"] = float(values.std(ddof=1)) if len(values) > 1 else 0.0
+            row[f"{metric}_min"] = float(values.min())
+            row[f"{metric}_max"] = float(values.max())
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def benchmark_difference_frame(by_seed: pd.DataFrame) -> pd.DataFrame:
+    modes = set(by_seed["mode"])
+    if modes != {"leak-safe", "compat"}:
+        return pd.DataFrame()
+    metric_columns = benchmark_metric_columns()
+    rows = []
+    for seed, group in by_seed.groupby("seed", sort=True):
+        by_mode = group.set_index("mode")
+        row = {"seed": int(seed)}
+        for metric in metric_columns:
+            row[f"compat_minus_safe_{metric}"] = float(by_mode.loc["compat", metric] - by_mode.loc["leak-safe", metric])
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def difference_summary_frame(differences: pd.DataFrame) -> pd.DataFrame:
+    if differences.empty:
+        return pd.DataFrame()
+    rows = []
+    for column in differences.columns:
+        if column == "seed":
+            continue
+        values = differences[column].astype(float)
+        rows.append(
+            {
+                "metric": column.replace("compat_minus_safe_", ""),
+                "compat_minus_safe_mean": float(values.mean()),
+                "compat_minus_safe_std": float(values.std(ddof=1)) if len(values) > 1 else 0.0,
+                "compat_minus_safe_min": float(values.min()),
+                "compat_minus_safe_max": float(values.max()),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def benchmark_metric_columns() -> list[str]:
+    return [
+        "cv_accuracy_mean_all_models",
+        "cv_accuracy_mean_top_models",
+        "test_accuracy",
+        "test_auc",
+        "test_f1",
+        "test_kappa",
+        "cv_minus_test_accuracy",
+    ]
+
+
+def write_benchmark_json(
+    output_dir: Path,
+    by_seed: pd.DataFrame,
+    summary: pd.DataFrame,
+    differences: pd.DataFrame,
+    difference_summary: pd.DataFrame,
+) -> None:
+    payload = {
+        "by_seed": by_seed.to_dict(orient="records"),
+        "summary": summary.to_dict(orient="records"),
+        "mode_differences_by_seed": differences.to_dict(orient="records"),
+        "mode_difference_summary": difference_summary.to_dict(orient="records"),
+    }
+    (output_dir / "benchmark_report.json").write_text(json.dumps(make_jsonable(payload), indent=2) + "\n")
+
+
+def write_benchmark_markdown(
+    output_dir: Path,
+    reho_csv: Path,
+    seed_start: int,
+    seeds: int,
+    summary: pd.DataFrame,
+    difference_summary: pd.DataFrame,
+) -> None:
+    lines = [
+        "# Public Benchmark Report",
+        "",
+        f"- ReHo CSV: `{reho_csv}`",
+        f"- Seeds: `{seed_start}` through `{seed_start + seeds - 1}`",
+        "",
+        "## Mode Summary",
+        "",
+        "| mode | n | test accuracy | test AUC | CV-test accuracy gap |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    for row in summary.to_dict(orient="records"):
+        lines.append(
+            "| {mode} | {n_seeds} | {acc:.3f} +/- {acc_std:.3f} | {auc:.3f} +/- {auc_std:.3f} | {gap:.3f} +/- {gap_std:.3f} |".format(
+                mode=row["mode"],
+                n_seeds=int(row["n_seeds"]),
+                acc=row["test_accuracy_mean"],
+                acc_std=row["test_accuracy_std"],
+                auc=row["test_auc_mean"],
+                auc_std=row["test_auc_std"],
+                gap=row["cv_minus_test_accuracy_mean"],
+                gap_std=row["cv_minus_test_accuracy_std"],
+            )
+        )
+    if not difference_summary.empty:
+        lines.extend(
+            [
+                "",
+                "## Compat Minus Leak-Safe",
+                "",
+                "| metric | mean | std | min | max |",
+                "| --- | ---: | ---: | ---: | ---: |",
+            ]
+        )
+        for row in difference_summary.to_dict(orient="records"):
+            lines.append(
+                "| {metric} | {mean:.3f} | {std:.3f} | {minv:.3f} | {maxv:.3f} |".format(
+                    metric=row["metric"],
+                    mean=row["compat_minus_safe_mean"],
+                    std=row["compat_minus_safe_std"],
+                    minv=row["compat_minus_safe_min"],
+                    maxv=row["compat_minus_safe_max"],
+                )
+            )
+    lines.append("")
+    (output_dir / "benchmark_report.md").write_text("\n".join(lines))
 
 
 def safe_name(name: str) -> str:

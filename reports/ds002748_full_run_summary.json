@@ -1,0 +1,253 @@
+{
+  "date": "2026-05-26",
+  "dataset": "OpenNeuro ds002748",
+  "reho_csv": "runs/ds002748/Data/1ReHo/reho_output_full.csv",
+  "rows": 72,
+  "segment_counts": {
+    "depr": 51,
+    "control": 21
+  },
+  "feature_columns": 100,
+  "finite_features": true,
+  "single_split_metrics": {
+    "leak-safe": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.7692307692307692,
+      "kappa": 0.052631578947368474,
+      "precision": 0.5333333333333333,
+      "recall": 0.5230769230769231,
+      "f1": 0.5178571428571428,
+      "sensitivity": 0.8461538461538461,
+      "specificity": 0.2,
+      "p_value": 0.76
+    },
+    "compat": {
+      "accuracy": 0.7222222222222222,
+      "auc": 0.676923076923077,
+      "kappa": 0.15094339622641517,
+      "precision": 0.625,
+      "recall": 0.5615384615384615,
+      "f1": 0.5566502463054187,
+      "sensitivity": 0.9230769230769231,
+      "specificity": 0.2,
+      "p_value": 0.47
+    }
+  },
+  "single_split_diagnostics": [
+    {
+      "mode": "leak-safe",
+      "train_subjects": 54,
+      "test_subjects": 18,
+      "training_rows_after_augmentation": 54,
+      "top_models": "Random Forest;Decision Tree;Neural Network",
+      "cv_accuracy_mean_all_models": 0.6321212121212122,
+      "cv_accuracy_mean_top_models": 0.6666666666666666,
+      "test_accuracy": 0.6666666666666666,
+      "test_auc": 0.7692307692307692,
+      "test_f1": 0.5178571428571428,
+      "test_kappa": 0.0526315789473684,
+      "cv_minus_test_accuracy": 0.0
+    },
+    {
+      "mode": "compat",
+      "train_subjects": 54,
+      "test_subjects": 18,
+      "training_rows_after_augmentation": 432,
+      "top_models": "Logistic Regression;Random Forest;Neural Network",
+      "cv_accuracy_mean_all_models": 0.9695580504321484,
+      "cv_accuracy_mean_top_models": 0.9876681814131696,
+      "test_accuracy": 0.7222222222222222,
+      "test_auc": 0.676923076923077,
+      "test_f1": 0.5566502463054187,
+      "test_kappa": 0.1509433962264151,
+      "cv_minus_test_accuracy": 0.2654459591909472
+    }
+  ],
+  "single_split_comparison": [
+    {
+      "metric": "accuracy",
+      "leak_safe": 0.6666666666666666,
+      "compat": 0.7222222222222222,
+      "compat_minus_safe": 0.0555555555555555
+    },
+    {
+      "metric": "auc",
+      "leak_safe": 0.7692307692307692,
+      "compat": 0.676923076923077,
+      "compat_minus_safe": -0.0923076923076922
+    },
+    {
+      "metric": "f1",
+      "leak_safe": 0.5178571428571428,
+      "compat": 0.5566502463054187,
+      "compat_minus_safe": 0.0387931034482759
+    },
+    {
+      "metric": "kappa",
+      "leak_safe": 0.0526315789473684,
+      "compat": 0.1509433962264151,
+      "compat_minus_safe": 0.0983118172790467
+    },
+    {
+      "metric": "p_value",
+      "leak_safe": 0.76,
+      "compat": 0.47,
+      "compat_minus_safe": -0.29
+    },
+    {
+      "metric": "precision",
+      "leak_safe": 0.5333333333333333,
+      "compat": 0.625,
+      "compat_minus_safe": 0.0916666666666666
+    },
+    {
+      "metric": "recall",
+      "leak_safe": 0.5230769230769231,
+      "compat": 0.5615384615384615,
+      "compat_minus_safe": 0.0384615384615384
+    },
+    {
+      "metric": "sensitivity",
+      "leak_safe": 0.8461538461538461,
+      "compat": 0.9230769230769232,
+      "compat_minus_safe": 0.0769230769230769
+    },
+    {
+      "metric": "specificity",
+      "leak_safe": 0.2,
+      "compat": 0.2,
+      "compat_minus_safe": 0.0
+    }
+  ],
+  "benchmark_50_seed_summary": [
+    {
+      "mode": "compat",
+      "n_seeds": 50,
+      "cv_accuracy_mean_all_models_mean": 0.9542567940835784,
+      "cv_accuracy_mean_all_models_std": 0.0259518593951535,
+      "cv_accuracy_mean_all_models_min": 0.8838634946092845,
+      "cv_accuracy_mean_all_models_max": 0.9965249933172948,
+      "cv_accuracy_mean_top_models_mean": 0.9713907154949658,
+      "cv_accuracy_mean_top_models_std": 0.0441936197726112,
+      "cv_accuracy_mean_top_models_min": 0.8588790875879889,
+      "cv_accuracy_mean_top_models_max": 1.0,
+      "test_accuracy_mean": 0.6933333333333332,
+      "test_accuracy_std": 0.0826616924843907,
+      "test_accuracy_min": 0.5,
+      "test_accuracy_max": 0.8333333333333334,
+      "test_auc_mean": 0.6564615384615385,
+      "test_auc_std": 0.103991235360291,
+      "test_auc_min": 0.3846153846153846,
+      "test_auc_max": 0.8923076923076922,
+      "test_f1_mean": 0.5583022078074359,
+      "test_f1_std": 0.1135463610807744,
+      "test_f1_min": 0.3333333333333333,
+      "test_f1_max": 0.8036363636363637,
+      "test_kappa_mean": 0.1403963471073006,
+      "test_kappa_std": 0.2175244597484725,
+      "test_kappa_min": -0.3278688524590163,
+      "test_kappa_max": 0.6086956521739131,
+      "cv_minus_test_accuracy_mean": 0.2780573821616323,
+      "cv_minus_test_accuracy_std": 0.0856921193330749,
+      "cv_minus_test_accuracy_min": 0.0811013098102111,
+      "cv_minus_test_accuracy_max": 0.5
+    },
+    {
+      "mode": "leak-safe",
+      "n_seeds": 50,
+      "cv_accuracy_mean_all_models_mean": 0.634430303030303,
+      "cv_accuracy_mean_all_models_std": 0.0363714632887715,
+      "cv_accuracy_mean_all_models_min": 0.5736363636363636,
+      "cv_accuracy_mean_all_models_max": 0.7178787878787879,
+      "cv_accuracy_mean_top_models_mean": 0.6633454545454547,
+      "cv_accuracy_mean_top_models_std": 0.0459588173212011,
+      "cv_accuracy_mean_top_models_min": 0.5848484848484848,
+      "cv_accuracy_mean_top_models_max": 0.7812121212121212,
+      "test_accuracy_mean": 0.64,
+      "test_accuracy_std": 0.0992793382292818,
+      "test_accuracy_min": 0.4444444444444444,
+      "test_accuracy_max": 0.8333333333333334,
+      "test_auc_mean": 0.644923076923077,
+      "test_auc_std": 0.1164561444099227,
+      "test_auc_min": 0.3846153846153846,
+      "test_auc_max": 0.9076923076923076,
+      "test_f1_mean": 0.5677873804263651,
+      "test_f1_std": 0.1018077259176039,
+      "test_f1_min": 0.3571428571428571,
+      "test_f1_max": 0.8036363636363637,
+      "test_kappa_mean": 0.1588340949043655,
+      "test_kappa_std": 0.1958190024978155,
+      "test_kappa_min": -0.263157894736842,
+      "test_kappa_max": 0.6086956521739131,
+      "cv_minus_test_accuracy_mean": 0.0233454545454545,
+      "cv_minus_test_accuracy_std": 0.1109696380877468,
+      "cv_minus_test_accuracy_min": -0.2072727272727272,
+      "cv_minus_test_accuracy_max": 0.2707070707070708
+    }
+  ],
+  "benchmark_50_seed_compat_minus_safe": [
+    {
+      "metric": "cv_accuracy_mean_all_models",
+      "compat_minus_safe_mean": 0.3198264910532754,
+      "compat_minus_safe_std": 0.0392809533184295,
+      "compat_minus_safe_min": 0.2476461487367663,
+      "compat_minus_safe_max": 0.388075056904247
+    },
+    {
+      "metric": "cv_accuracy_mean_top_models",
+      "compat_minus_safe_mean": 0.3080452609495112,
+      "compat_minus_safe_std": 0.0713473504614718,
+      "compat_minus_safe_min": 0.1415835986164776,
+      "compat_minus_safe_max": 0.4097786202036402
+    },
+    {
+      "metric": "test_accuracy",
+      "compat_minus_safe_mean": 0.0533333333333333,
+      "compat_minus_safe_std": 0.0965256875905445,
+      "compat_minus_safe_min": -0.2222222222222222,
+      "compat_minus_safe_max": 0.2222222222222222
+    },
+    {
+      "metric": "test_auc",
+      "compat_minus_safe_mean": 0.0115384615384615,
+      "compat_minus_safe_std": 0.0846403559556406,
+      "compat_minus_safe_min": -0.2461538461538461,
+      "compat_minus_safe_max": 0.1846153846153846
+    },
+    {
+      "metric": "test_f1",
+      "compat_minus_safe_mean": -0.0094851726189292,
+      "compat_minus_safe_std": 0.1121951367747095,
+      "compat_minus_safe_min": -0.3656633221850613,
+      "compat_minus_safe_max": 0.1737062937062937
+    },
+    {
+      "metric": "test_kappa",
+      "compat_minus_safe_mean": -0.0184377477970649,
+      "compat_minus_safe_std": 0.2216640026453504,
+      "compat_minus_safe_min": -0.7434532680434319,
+      "compat_minus_safe_max": 0.3431438127090302
+    },
+    {
+      "metric": "cv_minus_test_accuracy",
+      "compat_minus_safe_mean": 0.2547119276161778,
+      "compat_minus_safe_std": 0.1068986794910153,
+      "compat_minus_safe_min": 0.0572266368577515,
+      "compat_minus_safe_max": 0.5340121341725191
+    }
+  ],
+  "afni_reho_validation": {
+    "subjects": [
+      "sub-01",
+      "sub-25",
+      "sub-52",
+      "sub-70"
+    ],
+    "n_passed": 4,
+    "n_failed": 0,
+    "pearson_r_mean": 0.9765132458567698,
+    "pearson_r_min": 0.9721849320392932,
+    "pearson_r_max": 0.9833073062709268,
+    "threshold": 0.9
+  }
+}

@@ -47,6 +47,8 @@ def validate_against_afni(
     cleaned_path = validation_dir / f"{subject}_desc-cleaned_bold.nii.gz"
     python_reho_path = validation_dir / f"{subject}_desc-python_reho.nii.gz"
     afni_reho_path = validation_dir / f"{subject}_desc-afni_reho.nii.gz"
+    for path in (cleaned_path, python_reho_path, afni_reho_path):
+        path.unlink(missing_ok=True)
     cleaned.to_filename(cleaned_path)
 
     mask_img = nib.load(str(files["mask"]))
@@ -85,6 +87,35 @@ def validate_against_afni(
     }
     _write_result(work_dir, result)
     return result
+
+
+def validate_subjects_against_afni(
+    work_dir: Path,
+    derivatives_dir: Path,
+    subjects: list[str],
+    output_path: Path | None = None,
+    config: RehoConfig = RehoConfig(),
+) -> dict:
+    results = [validate_against_afni(work_dir, derivatives_dir, subject, config) for subject in subjects]
+    passed = [result for result in results if result["status"] == "passed"]
+    correlations = [float(result["pearson_r"]) for result in passed if "pearson_r" in result]
+    summary = {
+        "subjects": subjects,
+        "n_subjects": len(subjects),
+        "n_passed": len(passed),
+        "n_failed": sum(result["status"] == "failed" for result in results),
+        "n_skipped": sum(result["status"] == "skipped" for result in results),
+        "threshold": 0.90,
+        "pearson_r_mean": float(np.mean(correlations)) if correlations else None,
+        "pearson_r_min": float(np.min(correlations)) if correlations else None,
+        "pearson_r_max": float(np.max(correlations)) if correlations else None,
+        "results": results,
+    }
+    if output_path is None:
+        output_path = work_dir / "afni_reho_validation_summary.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(summary, indent=2) + "\n")
+    return summary
 
 
 def _write_result(work_dir: Path, result: dict) -> None:

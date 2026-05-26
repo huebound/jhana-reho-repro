@@ -5,8 +5,8 @@ import json
 import sys
 from pathlib import Path
 
-from .afni import validate_against_afni
-from .classify import ClassificationConfig, run_modes
+from .afni import validate_against_afni, validate_subjects_against_afni
+from .classify import ClassificationConfig, run_benchmark, run_modes
 from .datasets import prepare_ds002748
 from .reho import compute_reho_dataset
 
@@ -47,6 +47,15 @@ def build_parser() -> argparse.ArgumentParser:
     classify.add_argument("--compat-target-per-subject", type=int, default=8)
     classify.set_defaults(func=cmd_classify)
 
+    benchmark = subparsers.add_parser("benchmark-public", help="Run repeated-seed public classifier benchmark")
+    benchmark.add_argument("--reho", type=Path, required=True)
+    benchmark.add_argument("--output-dir", type=Path, required=True)
+    benchmark.add_argument("--mode", choices=["leak-safe", "compat", "both"], default="both")
+    benchmark.add_argument("--seeds", type=int, default=50)
+    benchmark.add_argument("--seed-start", type=int, default=0)
+    benchmark.add_argument("--compat-target-per-subject", type=int, default=8)
+    benchmark.set_defaults(func=cmd_benchmark)
+
     run = subparsers.add_parser("run-public", help="Prepare metadata, compute ReHo, and run classifiers")
     add_common_workdir(run)
     run.add_argument("--derivatives-dir", type=Path, default=None)
@@ -61,6 +70,8 @@ def build_parser() -> argparse.ArgumentParser:
     add_common_workdir(validate)
     validate.add_argument("--derivatives-dir", type=Path, default=None)
     validate.add_argument("--subject", default="sub-01")
+    validate.add_argument("--subjects", nargs="+", default=None)
+    validate.add_argument("--output", type=Path, default=None)
     validate.set_defaults(func=cmd_validate_afni)
 
     inspect = subparsers.add_parser("inspect-mrp", help="Write the known notebook contract document")
@@ -94,6 +105,22 @@ def cmd_classify(args: argparse.Namespace) -> None:
     print(json.dumps({mode: result["ensemble"] for mode, result in results.items()}, indent=2))
 
 
+def cmd_benchmark(args: argparse.Namespace) -> None:
+    config = ClassificationConfig(
+        n_permutations=0,
+        compat_target_per_subject=args.compat_target_per_subject,
+    )
+    frames = run_benchmark(
+        reho_csv=args.reho,
+        output_dir=args.output_dir,
+        seeds=args.seeds,
+        seed_start=args.seed_start,
+        mode=args.mode,
+        config=config,
+    )
+    print(frames["summary"].to_json(orient="records", indent=2))
+
+
 def cmd_run_public(args: argparse.Namespace) -> None:
     info = prepare_ds002748(args.work_dir, args.derivatives_dir, args.clone_derivatives)
     derivatives = Path(info["derivatives_dir"])
@@ -108,7 +135,10 @@ def cmd_run_public(args: argparse.Namespace) -> None:
 
 def cmd_validate_afni(args: argparse.Namespace) -> None:
     derivatives = args.derivatives_dir or (args.work_dir / "ds002748-fmriprep")
-    result = validate_against_afni(args.work_dir, derivatives, args.subject)
+    if args.subjects:
+        result = validate_subjects_against_afni(args.work_dir, derivatives, args.subjects, args.output)
+    else:
+        result = validate_against_afni(args.work_dir, derivatives, args.subject)
     print(json.dumps(result, indent=2))
 
 

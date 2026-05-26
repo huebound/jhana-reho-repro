@@ -1,0 +1,54 @@
+{
+  "subjects": [
+    "sub-01",
+    "sub-25",
+    "sub-52",
+    "sub-70"
+  ],
+  "n_subjects": 4,
+  "n_passed": 4,
+  "n_failed": 0,
+  "n_skipped": 0,
+  "threshold": 0.9,
+  "pearson_r_mean": 0.9765132458567698,
+  "pearson_r_min": 0.9721849320392932,
+  "pearson_r_max": 0.9833073062709268,
+  "results": [
+    {
+      "subject": "sub-01",
+      "status": "passed",
+      "pearson_r": 0.9833073062709268,
+      "threshold": 0.9,
+      "cleaned_bold": "runs/ds002748/afni_validation/sub-01_desc-cleaned_bold.nii.gz",
+      "python_reho": "runs/ds002748/afni_validation/sub-01_desc-python_reho.nii.gz",
+      "afni_reho": "runs/ds002748/afni_validation/sub-01_desc-afni_reho.nii.gz"
+    },
+    {
+      "subject": "sub-25",
+      "status": "passed",
+      "pearson_r": 0.9721849320392932,
+      "threshold": 0.9,
+      "cleaned_bold": "runs/ds002748/afni_validation/sub-25_desc-cleaned_bold.nii.gz",
+      "python_reho": "runs/ds002748/afni_validation/sub-25_desc-python_reho.nii.gz",
+      "afni_reho": "runs/ds002748/afni_validation/sub-25_desc-afni_reho.nii.gz"
+    },
+    {
+      "subject": "sub-52",
+      "status": "passed",
+      "pearson_r": 0.975196295705163,
+      "threshold": 0.9,
+      "cleaned_bold": "runs/ds002748/afni_validation/sub-52_desc-cleaned_bold.nii.gz",
+      "python_reho": "runs/ds002748/afni_validation/sub-52_desc-python_reho.nii.gz",
+      "afni_reho": "runs/ds002748/afni_validation/sub-52_desc-afni_reho.nii.gz"
+    },
+    {
+      "subject": "sub-70",
+      "status": "passed",
+      "pearson_r": 0.9753644494116962,
+      "threshold": 0.9,
+      "cleaned_bold": "runs/ds002748/afni_validation/sub-70_desc-cleaned_bold.nii.gz",
+      "python_reho": "runs/ds002748/afni_validation/sub-70_desc-python_reho.nii.gz",
+      "afni_reho": "runs/ds002748/afni_validation/sub-70_desc-afni_reho.nii.gz"
+    }
+  ]
+}
