@@ -43,10 +43,14 @@ python -m pip install -e ".[data]"
 AFNI is optional but recommended for ReHo validation:
 
 ```bash
-# macOS example
-brew install --cask xquartz
-brew install afni
+# macOS Apple Silicon example
+brew install openmotif libxpm gsl
+curl -O https://afni.nimh.nih.gov/pub/dist/bin/misc/@update.afni.binaries
+tcsh @update.afni.binaries -package macos_13_ARM -bindir "$HOME/abin"
+export PATH="$HOME/abin:$PATH"
 ```
+
+The AFNI installation route above follows the official AFNI macOS 12+ Apple Silicon instructions.
 
 ## Run
 
@@ -120,7 +124,7 @@ On 2026-05-26, the 20-subject public smoke run completed end-to-end locally:
 - Compat held-out metrics: accuracy `0.40`, AUC `0.667`, F1 `0.40`.
 - Leak-safe top-model CV accuracy mean: `0.689`; held-out accuracy: `0.40`.
 - Compat top-model CV accuracy mean: `0.994`; held-out accuracy: `0.40`.
-- AFNI validation was attempted and explicitly skipped because `3dReHo` is not installed on this machine.
+- AFNI validation passed for `sub-01`: Python ReHo versus AFNI `3dReHo` Pearson `r = 0.9833` at the voxel level.
 
 These numbers are a machinery check on public depression/control data. They are not evidence for or against the paper's private ACAM-J accuracy.
 

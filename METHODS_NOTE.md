@@ -36,6 +36,8 @@ Held-out test accuracy was `0.40` in both modes on this small public split. Comp
 
 The neutral interpretation is that row-level CV over augmented rows can produce highly optimistic validation estimates on this public stand-in dataset. This does not prove the private ACAM-J result is inflated; it shows why the leak-safe mode is included and why subject-level validation should be preferred for any rerun on the private data.
 
+The ReHo front-end was checked against AFNI `3dReHo` on `sub-01`. The voxelwise Pearson correlation between the Python implementation and AFNI was `0.9833`, passing the repository threshold of `0.90`.
+
 ## Atlas and ROI Selection
 
 The paper reports a 498-ROI feature space: Schaefer-400, Tian-32, Bianciardi-54, and MDTB-10. The public run intentionally uses Schaefer-100 only. This keeps the proof of machinery small and reproducible.
